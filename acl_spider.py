@@ -1,8 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
 import json
+import argparse
 
-def extract_paper_info(url):
+def extract_paper_info(url, output_filename):
     # 发送 GET 请求获取 HTML 内容
     response = requests.get(url)
     html = response.text
@@ -44,13 +45,18 @@ def extract_paper_info(url):
             continue
     
     # 将论文信息列表导出为 JSON 文件
-    with open('papers.json', 'w', encoding='utf-8') as f:
+    with open(output_filename, 'w', encoding='utf-8') as f:
         json.dump(papers, f, ensure_ascii=False, indent=4)
         print("papers.json 文件保存成功！")
     return papers
 
+parser = argparse.ArgumentParser(description='Export paper information to JSON given ACL url.')
+parser.add_argument('--url', default='https://aclanthology.org/events/acl-2023/', help='ACL url')
+parser.add_argument('--output', default='papers.json', help='Path to the json output file')
+args = parser.parse_args()
 
-# 测试代码
-url = 'https://aclanthology.org/events/acl-2023/'  # 替换为你要爬取的网页 URL
-papers = extract_paper_info(url)
+
+url = args.url
+output_filename = args.output
+papers = extract_paper_info(url, output_filename)
 
