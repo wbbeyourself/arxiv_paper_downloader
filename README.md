@@ -10,7 +10,7 @@ pip install -r requirements.txt
 
 ## usage
 
-Step 1: download all papers
+Step 1: download all papers, default is ACL 2023 papers, you can specify your acl url.
 ```bash
 python acl_spider.py
 ```
