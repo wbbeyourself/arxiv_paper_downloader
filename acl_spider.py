@@ -1,12 +1,13 @@
-import requests
 from bs4 import BeautifulSoup
 import json
 import argparse
+from tqdm import tqdm
+from utils import get_html_from_url
+
 
 def extract_paper_info(url, output_filename):
     # 发送 GET 请求获取 HTML 内容
-    response = requests.get(url)
-    html = response.text
+    html = get_html_from_url(url)
     
     # 使用 BeautifulSoup 解析 HTML
     soup = BeautifulSoup(html, 'html.parser')
@@ -16,9 +17,9 @@ def extract_paper_info(url, output_filename):
     
     # 找到所有论文的 HTML block
     paper_blocks = soup.find_all('span', class_='d-block')
-    
+
     # 遍历每个论文 block 提取信息
-    for block in paper_blocks:
+    for block in tqdm(paper_blocks):
         try:
             # 提取论文标题和 URL
             title_element = block.find('strong').find('a')
@@ -50,13 +51,15 @@ def extract_paper_info(url, output_filename):
         print("papers.json 文件保存成功！")
     return papers
 
-parser = argparse.ArgumentParser(description='Export paper information to JSON given ACL url.')
-parser.add_argument('--url', default='https://aclanthology.org/events/acl-2023/', help='ACL url')
-parser.add_argument('--output', default='papers.json', help='Path to the json output file')
-args = parser.parse_args()
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Export paper information to JSON given ACL url.')
+    parser.add_argument('--url', default='https://aclanthology.org/events/acl-2023/', help='ACL url')
+    parser.add_argument('--output', default='papers.json', help='Path to the json output file')
+    args = parser.parse_args()
 
 
-url = args.url
-output_filename = args.output
-papers = extract_paper_info(url, output_filename)
+    url = args.url
+    output_filename = args.output
+    papers = extract_paper_info(url, output_filename)
 

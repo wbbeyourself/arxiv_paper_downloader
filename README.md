@@ -15,9 +15,9 @@ Step 1: download all papers, default is ACL 2023 papers, you can specify your ac
 python acl_spider.py
 ```
 
-Step 2: filter papers according to your keywords
+Step 2: filter papers according to your keywords, and get the abstract of every paper.
 ```bash
-python filter_papers.py keyword1 keyword2 keyword3
+python filter_papers.py --keywords keyword1 keyword2 keyword3
 ```
 
 
