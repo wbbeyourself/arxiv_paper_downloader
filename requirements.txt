@@ -1,3 +1,6 @@
 tqdm
 requests
 beautifulsoup4
+matplotlib
+wordcloud
+pillow
