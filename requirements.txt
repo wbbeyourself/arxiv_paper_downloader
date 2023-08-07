@@ -4,3 +4,4 @@ beautifulsoup4
 matplotlib
 wordcloud
 pillow
+pdf2image
