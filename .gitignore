@@ -1,6 +1,8 @@
 .vscode/
 __pycache__/
 .ipynb_checkpoints/
+arxiv_papers/
 .DS_Store
+test.py
 papers.json
 papers.md

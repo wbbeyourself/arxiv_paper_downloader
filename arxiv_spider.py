@@ -8,26 +8,60 @@ from PIL import Image
 from datetime import datetime
 from tqdm import tqdm
 
+url = 'https://arxiv.org/list/cs.CL/pastweek?show=500'  # 替换为你要爬取的url
+
 def remove_symbols(title):
     new_title = re.sub('[^a-zA-Z ]', ' ', title)
     return new_title
 
-def get_formatted_date():
-    # 获取当前日期
-    current_date = datetime.now()
 
-    # 将日期格式化成 YYYY-MM-DD 格式的字符串
-    formatted_date = current_date.strftime("%Y-%m-%d")
+# def get_formatted_date():
+#     # 获取当前日期
+#     current_date = datetime.now()
 
-    return formatted_date
+#     # 将日期格式化成 YYYY-MM-DD 格式的字符串
+#     formatted_date = current_date.strftime("%Y-%m-%d")
 
+#     return formatted_date
+
+
+def convert_date_format(s):
+    # 定义输入字符串的日期格式
+    input_format = "%a, %d %b %Y"
+    # 定义输出字符串的日期格式
+    output_format = "%Y-%m-%d"
+    
+    # 将输入字符串转换为datetime对象
+    date_obj = datetime.strptime(s, input_format)
+    # 将datetime对象转换为指定格式的字符串
+    converted_date = date_obj.strftime(output_format)
+    
+    return converted_date
+
+
+def get_latest_date(url):
+    response = requests.get(url)
+    html = response.text
+    soup = BeautifulSoup(html, 'html.parser')
+    
+    # 找到第一个 h3 标签并提取文本
+    first_h3 = soup.find('h3')
+    latest_date = first_h3.text.strip()
+    final_date = convert_date_format(latest_date)
+    # print(f'latest_date: {latest_date}\n\nfinal_date: {final_date}')
+    print(final_date)
+    return final_date
+
+date_str = get_latest_date(url)
+cur_dir = f"./arxiv_papers/{date_str}/"
+os.makedirs(cur_dir, exist_ok=True)
 
 def download_pdf_image(url, title):
-    # 保存第一页图片
-    date_str = get_formatted_date()
+    global cur_dir
+    global date_str
+    # 保存前2页图片
     title = remove_symbols(title)
-    os.makedirs(f'./{date_str}/', exist_ok=True)
-    path = f'{date_str}/{date_str}_{title}.png'
+    path = f'{cur_dir}{date_str}_{title}_1.png'
 
     if os.path.exists(path):
         return
@@ -42,8 +76,13 @@ def download_pdf_image(url, title):
     first_page = images[0]
     first_page.save(path, 'PNG')
 
+    path = f'{cur_dir}{date_str}_{title}_2.png'
+    second_page = images[1]
+    second_page.save(path, 'PNG')
+
 
 def crawl_html(url):
+    global date_str
     response = requests.get(url)
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
@@ -63,23 +102,18 @@ def crawl_html(url):
                 # /pdf/2308.02482
                 pdf_link = dt_tag.find('a', {'title': 'Download PDF'})['href']
                 pdf_link = f"https://arxiv.org{pdf_link}.pdf"
-                result.append({'arxiv_id': arxiv_id, 'title': title, 'pdf_link': pdf_link})
+                result.append({'arxiv_id': arxiv_id, 'title': title, 'pdf_link': pdf_link, 'date': date_str})
         return result
     else:
         return None
 
-url = 'https://arxiv.org/list/cs.CL/pastweek?show=500'  # 替换为你要爬取的url
+
 result = crawl_html(url)
 
-date_str = get_formatted_date()
-os.makedirs(f'./{date_str}/', exist_ok=True)
-
-
 # 保存结果到文件
-json_path = f'./{date_str}/arxiv_{date_str}.json'
+json_path = f'{cur_dir}arxiv_{date_str}.json'
 with open(json_path, 'w', encoding='utf-8') as file:
     json.dump(result, file, ensure_ascii=False, indent=2)
-
 
 total = len(result)
 for i, js in tqdm(enumerate(result)):
@@ -89,4 +123,6 @@ for i, js in tqdm(enumerate(result)):
     print(f"processing {i+1}/{total} {title} ...")
     download_pdf_image(pdf_link, title)
 
+
 print('\n\ndone!!!')
+print(date_str)
