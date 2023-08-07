@@ -61,7 +61,7 @@ def download_pdf_image(url, title):
     global date_str
     # 保存前2页图片
     title = remove_symbols(title)
-    path = f'{cur_dir}{date_str}_{title}_1.png'
+    path = f'{cur_dir}{date_str}_{title}_1.jpg'
 
     if os.path.exists(path):
         return
@@ -74,11 +74,11 @@ def download_pdf_image(url, title):
 
     # 获取第一页图片
     first_page = images[0]
-    first_page.save(path, 'PNG')
+    first_page.save(path, 'JPEG')
 
-    path = f'{cur_dir}{date_str}_{title}_2.png'
+    path = f'{cur_dir}{date_str}_{title}_2.jpg'
     second_page = images[1]
-    second_page.save(path, 'PNG')
+    second_page.save(path, 'JPEG')
 
 
 def crawl_html(url):
