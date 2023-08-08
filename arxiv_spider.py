@@ -82,13 +82,13 @@ def add_watermark(image_path, watermark_text):
 
 
 
-def download_pdf_image(url, title, watermark_text):
+def download_pdf_image(url, title, arxiv_id, watermark_text):
     global cur_dir
     global date_str
     # 保存前2页图片
     title = remove_symbols(title)
     title = title[:160]
-    path = f'{cur_dir}{date_str}_{title}_1.jpg'
+    path = f'{cur_dir}{date_str}__{arxiv_id}__{title}_1.jpg'
 
     # 下载PDF文件
     response = requests.get(url)
@@ -102,7 +102,7 @@ def download_pdf_image(url, title, watermark_text):
     if watermark_text:
         add_watermark(path, watermark_text)
 
-    path = f'{cur_dir}{date_str}_{title}_2.jpg'
+    path = f'{cur_dir}{date_str}__{arxiv_id}__{title}_2.jpg'
     second_page = images[1]
     second_page.save(path, 'JPEG')
     if watermark_text:
@@ -167,7 +167,7 @@ for i, js in tqdm(enumerate(result)):
     pdf_link = js['pdf_link']
     comments = js['comments']
     print(f"processing {i+1}/{total} {title} ...")
-    download_pdf_image(pdf_link, title, comments)
+    download_pdf_image(pdf_link, title, arxiv_id, comments)
 
 
 print('\n\ndone!!!')
