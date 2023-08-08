@@ -94,15 +94,22 @@ def crawl_html(url):
         result = []
         for dt_tag, dd_tag in zip(dt_tags, dd_tags):
             a_tag = dt_tag.find('a', {'title': 'Abstract'})
-            if a_tag:
-                arxiv_id = a_tag['href'].split('/')[-1]
-                title_element = dd_tag.find('div', class_='list-title mathjax')
-                title = title_element.text.strip().replace('Title:', ' ').strip()
-                # https://arxiv.org /pdf/2308.02482  .pdf
-                # /pdf/2308.02482
-                pdf_link = dt_tag.find('a', {'title': 'Download PDF'})['href']
-                pdf_link = f"https://arxiv.org{pdf_link}.pdf"
-                result.append({'arxiv_id': arxiv_id, 'title': title, 'pdf_link': pdf_link, 'date': date_str})
+            try:
+                if a_tag:
+                    arxiv_id = a_tag['href'].split('/')[-1]
+                    title_element = dd_tag.find('div', class_='list-title mathjax')
+                    title = title_element.text.strip().replace('Title:', ' ').strip()
+                    # https://arxiv.org /pdf/2308.02482  .pdf
+                    # /pdf/2308.02482
+                    pdf_link = dt_tag.find('a', {'title': 'Download PDF'})['href']
+                    pdf_link = f"https://arxiv.org{pdf_link}.pdf"
+                    item = {'arxiv_id': arxiv_id, 'title': title, 'pdf_link': pdf_link, 'date': date_str}
+                    result.append(item)
+            except Exception as e:
+                print('\n\n++++++++++++++++\n')
+                print(e)
+                print('\n\n')
+                pass
         return result
     else:
         return None
