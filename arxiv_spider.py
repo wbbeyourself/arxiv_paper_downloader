@@ -86,9 +86,6 @@ def download_pdf_image(url, title, watermark_text):
     title = remove_symbols(title)
     path = f'{cur_dir}{date_str}_{title}_1.jpg'
 
-    if os.path.exists(path):
-        return
-
     # 下载PDF文件
     response = requests.get(url)
 
