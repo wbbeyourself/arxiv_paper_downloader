@@ -1,5 +1,6 @@
 import re
 import os
+import sys
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -52,11 +53,10 @@ def get_latest_date(url):
     print(final_date)
     return final_date
 
-ROOT_DIR = 'D:/BaiduSyncdisk'
-if not os.path.exists(ROOT_DIR):
-    ROOT_DIR = '.'
+ROOT_DIR = sys.argv[1]
+
 date_str = get_latest_date(url)
-cur_dir = f"{ROOT_DIR}/arxiv_papers/{date_str}/"
+cur_dir = f"{ROOT_DIR}/arxiv_papers/{date_str}"
 os.makedirs(cur_dir, exist_ok=True)
 
 
@@ -86,27 +86,29 @@ def download_pdf_image(url, title, arxiv_id, watermark_text):
     global cur_dir
     global date_str
     # 保存前2页图片
-    title = remove_symbols(title)
-    title = title[:160]
-    path = f'{cur_dir}{date_str}__{arxiv_id}__{title}_1.jpg'
+
+    pdf_root = f'{cur_dir}/pdfs'
+    img_root = f'{cur_dir}/imgs'
+    os.makedirs(pdf_root, exist_ok=True)
+    os.makedirs(img_root, exist_ok=True)
+
+    pdf_path = f'{cur_dir}/pdfs/{date_str}__{arxiv_id}__{title}.pdf'
+    img_path = f'{cur_dir}/imgs/{date_str}__{arxiv_id}__{title}.jpg'
 
     # 下载PDF文件
     response = requests.get(url)
+    with open(pdf_path, 'wb') as f:
+        f.write(response.content)
 
     # 将PDF文件转换为图片
     images = convert_from_bytes(response.content)
 
     # 获取第一页图片
     first_page = images[0]
-    first_page.save(path, 'JPEG')
+    first_page.save(img_path, 'JPEG')
     if watermark_text:
-        add_watermark(path, watermark_text)
+        add_watermark(img_path, watermark_text)
 
-    path = f'{cur_dir}{date_str}__{arxiv_id}__{title}_2.jpg'
-    second_page = images[1]
-    second_page.save(path, 'JPEG')
-    if watermark_text:
-        add_watermark(path, watermark_text)
 
 
 def crawl_html(url):
@@ -152,22 +154,53 @@ def crawl_html(url):
     else:
         return None
 
+def get_valid_title(title):
+    title = remove_symbols(title)[:150]
+    title = title[:150]
+    title = ' '.join(title.split())
+    title = title.replace(' ', '_')
+    return title
+
+
+# 将 content_list 追加到filename中
+def append_file(filename, content_list, new_line=False):
+    if not content_list:
+        return
+    if new_line:
+        content_list = [text if text.endswith('\n') else text+'\n' for text in content_list]
+    with open(filename, 'a+', encoding='utf-8') as f:
+        f.writelines(content_list)
 
 result = crawl_html(url)
 
 # 保存结果到文件
-json_path = f'{cur_dir}arxiv_{date_str}.json'
+json_path = f'{cur_dir}/arxiv_{date_str}.json'
 with open(json_path, 'w', encoding='utf-8') as file:
     json.dump(result, file, ensure_ascii=False, indent=2)
 
+
+md_path = f'{cur_dir}/arxiv_{date_str}.md'
 total = len(result)
 for i, js in tqdm(enumerate(result)):
     title = js['title']
+    truncated_title = get_valid_title(title)
     arxiv_id = js['arxiv_id']
     pdf_link = js['pdf_link']
     comments = js['comments']
+    authors = js['authors']
+    comments = js['comments']
     print(f"processing {i+1}/{total} {title} ...")
-    download_pdf_image(pdf_link, title, arxiv_id, comments)
+    download_pdf_image(pdf_link, truncated_title, arxiv_id, comments)
+    md_block = []
+
+    md_block.append(f"## {title}\n")
+    md_block.append(f"- arXiv id: {arxiv_id}\n")
+    md_block.append(f"- PDF LINK: {pdf_link}\n")
+    md_block.append(f"- authors: {authors}\n")
+    md_block.append(f"- comments: {comments}\n")
+    md_block.append(f"- [PDF FILE](./pdfs/{date_str}__{arxiv_id}__{truncated_title}.pdf)\n\n")
+    md_block.append(f"![fisrt page](./imgs/{date_str}__{arxiv_id}__{truncated_title}.jpg)\n\n\n")
+    append_file(md_path, md_block)
 
 
 print('\n\ndone!!!')
