@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 from pdf2image import convert_from_bytes
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 from tqdm import tqdm
 
@@ -56,7 +56,30 @@ date_str = get_latest_date(url)
 cur_dir = f"./arxiv_papers/{date_str}/"
 os.makedirs(cur_dir, exist_ok=True)
 
-def download_pdf_image(url, title):
+
+def add_watermark(image_path, watermark_text):
+    image = Image.open(image_path)
+    width, height = image.size
+
+    # 创建一个新的图片对象，大小与原图一致
+    new_image = Image.new('RGB', (width, height + 50), (255, 255, 255))
+    new_image.paste(image, (0, 0))
+
+    # 在新图片上添加水印
+    draw = ImageDraw.Draw(new_image)
+    font = ImageFont.truetype('arial.ttf', 60)  # 使用Arial字体，字号为60
+    text_bbox = draw.textbbox((0, 0), watermark_text, font=font)
+    text_width = text_bbox[2] - text_bbox[0]
+    text_height = text_bbox[3] - text_bbox[1]
+    text_position = ((width - text_width) // 2, height - 60)
+    draw.text(text_position, watermark_text, font=font, fill=(255, 0, 0))
+    
+    # 保存新图片
+    new_image.save(image_path)
+
+
+
+def download_pdf_image(url, title, watermark_text):
     global cur_dir
     global date_str
     # 保存前2页图片
@@ -75,10 +98,14 @@ def download_pdf_image(url, title):
     # 获取第一页图片
     first_page = images[0]
     first_page.save(path, 'JPEG')
+    if watermark_text:
+        add_watermark(path, watermark_text)
 
     path = f'{cur_dir}{date_str}_{title}_2.jpg'
     second_page = images[1]
     second_page.save(path, 'JPEG')
+    if watermark_text:
+        add_watermark(path, watermark_text)
 
 
 def crawl_html(url):
@@ -97,13 +124,23 @@ def crawl_html(url):
             try:
                 if a_tag:
                     arxiv_id = a_tag['href'].split('/')[-1]
-                    title_element = dd_tag.find('div', class_='list-title mathjax')
-                    title = title_element.text.strip().replace('Title:', ' ').strip()
-                    # https://arxiv.org /pdf/2308.02482  .pdf
-                    # /pdf/2308.02482
                     pdf_link = dt_tag.find('a', {'title': 'Download PDF'})['href']
                     pdf_link = f"https://arxiv.org{pdf_link}.pdf"
-                    item = {'arxiv_id': arxiv_id, 'title': title, 'pdf_link': pdf_link, 'date': date_str}
+                    
+                    title_element = dd_tag.find('div', class_='list-title mathjax')
+                    title = title_element.text.strip().replace('Title:', ' ').strip()
+
+                    authors_tag = dd_tag.find('div', class_='list-authors')
+                    authors = ''
+                    if authors_tag:
+                        authors = authors_tag.get_text(strip=True).replace('Authors:', '').replace(',', ', ')
+                    
+                    comments_tag = dd_tag.find('div', class_='list-comments')
+                    comments = ''
+                    if comments_tag:
+                        comments = comments_tag.get_text(strip=True).replace('Comments:', '')
+
+                    item = {'arxiv_id': arxiv_id, 'title': title, 'pdf_link': pdf_link, 'authors': authors, 'comments': comments, 'date': date_str}
                     result.append(item)
             except Exception as e:
                 print('\n\n++++++++++++++++\n')
@@ -127,8 +164,9 @@ for i, js in tqdm(enumerate(result)):
     title = js['title']
     arxiv_id = js['arxiv_id']
     pdf_link = js['pdf_link']
+    comments = js['comments']
     print(f"processing {i+1}/{total} {title} ...")
-    download_pdf_image(pdf_link, title)
+    download_pdf_image(pdf_link, title, comments)
 
 
 print('\n\ndone!!!')
