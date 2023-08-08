@@ -52,8 +52,11 @@ def get_latest_date(url):
     print(final_date)
     return final_date
 
+ROOT_DIR = 'D:/BaiduSyncdisk'
+if not os.path.exists(ROOT_DIR):
+    ROOT_DIR = '.'
 date_str = get_latest_date(url)
-cur_dir = f"./arxiv_papers/{date_str}/"
+cur_dir = f"{ROOT_DIR}/arxiv_papers/{date_str}/"
 os.makedirs(cur_dir, exist_ok=True)
 
 
@@ -84,6 +87,7 @@ def download_pdf_image(url, title, watermark_text):
     global date_str
     # 保存前2页图片
     title = remove_symbols(title)
+    title = title[:160]
     path = f'{cur_dir}{date_str}_{title}_1.jpg'
 
     # 下载PDF文件
