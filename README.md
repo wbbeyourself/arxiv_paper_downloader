@@ -25,9 +25,13 @@ python filter_papers.py --keywords keyword1 keyword2 keyword3
 
 ### 2. Download Arxiv papers
 
-Keep a screenshot of the front page of the paper every day.
+Download the latest daily research paper PDF, generate corresponding markdown and preview images.
 
 ```bash
-python arxiv_spider.py
+python arxiv_spider.py /path/to/your/folder
 ```
+
+## todo
+- [ ] highlight target conferences and authors
+- [ ] highlight custom keyword list
 
