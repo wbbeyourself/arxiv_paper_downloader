@@ -82,7 +82,7 @@ def add_watermark(image_path, watermark_text):
 
 
 
-def download_pdf_image(url, title, arxiv_id, watermark_text):
+def download_pdf_image(url, title, arxiv_id, watermark_text, index):
     global cur_dir
     global date_str
     # 保存前2页图片
@@ -92,8 +92,10 @@ def download_pdf_image(url, title, arxiv_id, watermark_text):
     os.makedirs(pdf_root, exist_ok=True)
     os.makedirs(img_root, exist_ok=True)
 
-    pdf_path = f'{cur_dir}/pdfs/{date_str}__{arxiv_id}__{title}.pdf'
-    img_path = f'{cur_dir}/imgs/{date_str}__{arxiv_id}__{title}.jpg'
+    pdf_path = f'{cur_dir}/pdfs/{date_str}_{index}__{arxiv_id}__{title}.pdf'
+    pdf_relative_path = f'./pdfs/{date_str}_{index}__{arxiv_id}__{title}.pdf'
+    img_path = f'{cur_dir}/imgs/{date_str}_{index}__{arxiv_id}__{title}.jpg'
+    img_relative_path = f'./imgs/{date_str}_{index}__{arxiv_id}__{title}.jpg'
 
     # 下载PDF文件
     response = requests.get(url)
@@ -108,6 +110,7 @@ def download_pdf_image(url, title, arxiv_id, watermark_text):
     first_page.save(img_path, 'JPEG')
     if watermark_text:
         add_watermark(img_path, watermark_text)
+    return pdf_relative_path, img_relative_path
 
 
 
@@ -190,16 +193,16 @@ for i, js in tqdm(enumerate(result)):
     authors = js['authors']
     comments = js['comments']
     print(f"processing {i+1}/{total} {title} ...")
-    download_pdf_image(pdf_link, truncated_title, arxiv_id, comments)
+    pdf_relative_path, img_relative_path = download_pdf_image(pdf_link, truncated_title, arxiv_id, comments, i+1)
     md_block = []
 
-    md_block.append(f"## {title}\n")
+    md_block.append(f"## [{i+1}]{title}\n")
     md_block.append(f"- arXiv id: {arxiv_id}\n")
     md_block.append(f"- PDF LINK: {pdf_link}\n")
     md_block.append(f"- authors: {authors}\n")
     md_block.append(f"- comments: {comments}\n")
-    md_block.append(f"- [PDF FILE](./pdfs/{date_str}__{arxiv_id}__{truncated_title}.pdf)\n\n")
-    md_block.append(f"![fisrt page](./imgs/{date_str}__{arxiv_id}__{truncated_title}.jpg)\n\n\n")
+    md_block.append(f"- [PDF FILE]({pdf_relative_path})\n\n")
+    md_block.append(f"![fisrt page]({img_relative_path})\n\n\n")
     append_file(md_path, md_block)
 
 
