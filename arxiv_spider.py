@@ -81,11 +81,16 @@ def add_watermark(image_path, watermark_text):
     new_image.save(image_path)
 
 
+# 添加前导0
+def add_leading_zeros(num):
+    return str(num).zfill(3)
+
 
 def download_pdf_image(url, title, arxiv_id, watermark_text, index):
     global cur_dir
     global date_str
-    # 保存前2页图片
+    
+    index = add_leading_zeros(index)
 
     pdf_root = f'{cur_dir}/pdfs'
     img_root = f'{cur_dir}/imgs'
