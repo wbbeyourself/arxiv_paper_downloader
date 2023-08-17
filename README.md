@@ -32,6 +32,8 @@ python arxiv_spider.py /path/to/your/folder
 ```
 
 ## todo
-- [ ] highlight target conferences and authors
-- [ ] highlight custom keyword list
+- [ ] Highlight target conferences and authors.
+- [ ] Highlight custom keyword list.
+- [ ] Customize the specific areas of interest, such as CS.CL and CS.CV.
+- [ ] Demo videos.
 
