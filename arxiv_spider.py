@@ -54,6 +54,15 @@ def get_latest_date(url):
     return final_date
 
 ROOT_DIR = sys.argv[1]
+overwrite = False
+if len(sys.argv) >= 3:
+    flag_overwrite = sys.argv[2]
+    if flag_overwrite == '--overwrite':
+        overwrite = True
+    else:
+        print(f"Error: invalid args: {sys.argv[1:]}\n")
+        print(f"Usage: python {__file__} /paper/target/path [--overwrite]\n")
+        sys.exit(-1)
 
 date_str = get_latest_date(url)
 cur_dir = f"{ROOT_DIR}/arxiv_papers/{date_str}"
@@ -188,6 +197,16 @@ with open(json_path, 'w', encoding='utf-8') as file:
 
 
 md_path = f'{cur_dir}/arxiv_{date_str}.md'
+if os.path.exists(md_path):
+    if not overwrite:
+        print(f'{date_str}.md already exists! Add --overwrite to rewrite!')
+        sys.exit(-1)
+    else:
+        with open(md_path, 'w', encoding='utf-8') as fp:
+            # create empty md file
+            pass
+
+
 total = len(result)
 for i, js in tqdm(enumerate(result)):
     title = js['title']
