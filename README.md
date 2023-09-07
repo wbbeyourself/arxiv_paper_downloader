@@ -36,4 +36,5 @@ python arxiv_spider.py /path/to/your/folder
 - [ ] Highlight custom keyword list.
 - [ ] Customize the specific areas of interest, such as CS.CL and CS.CV.
 - [ ] Demo videos.
+- [x] Use VPN Arg Parse. 
 

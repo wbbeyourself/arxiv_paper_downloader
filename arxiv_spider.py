@@ -11,8 +11,10 @@ from tqdm import tqdm
 
 url = 'https://arxiv.org/list/cs.CL/pastweek?show=500'  # 替换为你要爬取的url
 
+
+# 保留字母和数字
 def remove_symbols(title):
-    new_title = re.sub('[^a-zA-Z ]', ' ', title)
+    new_title = re.sub('[^a-zA-Z0-9 ]', ' ', title)
     return new_title
 
 
@@ -40,8 +42,32 @@ def convert_date_format(s):
     return converted_date
 
 
+def get_reponse(url):
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response
+        else:
+            raise Exception(f'Network is down, status code: {response.status_code}')
+    except:
+        proxy = "http://127.0.0.1:7890"
+        proxies = {
+            'http': proxy,
+            'https': proxy
+        }
+        try:
+            response = requests.get(url, proxies=proxies)
+            if response.status_code == 200:
+                return response
+            else:
+                raise Exception(f"Network is down! Proxy {proxy} is unavaliable!")
+        except:
+            raise Exception(f"Network is down! Proxy {proxy} is unavaliable!")
+
+
+
 def get_latest_date(url):
-    response = requests.get(url)
+    response = get_reponse(url)
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
     
@@ -111,8 +137,13 @@ def download_pdf_image(url, title, arxiv_id, watermark_text, index):
     img_path = f'{cur_dir}/imgs/{date_str}_{index}__{arxiv_id}__{title}.jpg'
     img_relative_path = f'./imgs/{date_str}_{index}__{arxiv_id}__{title}.jpg'
 
+    if os.path.exists(pdf_path) and os.path.exists(img_path):
+        print(f"Skip PDF {pdf_path} ...")
+        return pdf_relative_path, img_relative_path
+
+
     # 下载PDF文件
-    response = requests.get(url)
+    response = get_reponse(url)
     with open(pdf_path, 'wb') as f:
         f.write(response.content)
 
@@ -130,7 +161,7 @@ def download_pdf_image(url, title, arxiv_id, watermark_text, index):
 
 def crawl_html(url):
     global date_str
-    response = requests.get(url)
+    response = get_reponse(url)
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
     dl_tags = soup.find_all('dl')
@@ -217,9 +248,20 @@ for i, js in tqdm(enumerate(result)):
     authors = js['authors']
     comments = js['comments']
     print(f"processing {i+1}/{total} {title} ...")
-    pdf_relative_path, img_relative_path = download_pdf_image(pdf_link, truncated_title, arxiv_id, comments, i+1)
-    md_block = []
+    max_try = 5
+    kk = 0
+    while True:
+        kk += 1
+        try:
+            pdf_relative_path, img_relative_path = \
+                download_pdf_image(pdf_link, truncated_title, arxiv_id, comments, i+1)
+            break
+        except Exception as e:
+            print(f"Exception: {e}, try {i} times ...\n")
+            if kk > max_try:
+                break
 
+    md_block = []
     md_block.append(f"## [{i+1}]{title}\n")
     md_block.append(f"- arXiv id: {arxiv_id}\n")
     md_block.append(f"- PDF LINK: {pdf_link}\n")
