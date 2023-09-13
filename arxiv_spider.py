@@ -257,7 +257,7 @@ for i, js in tqdm(enumerate(result)):
                 download_pdf_image(pdf_link, truncated_title, arxiv_id, comments, i+1)
             break
         except Exception as e:
-            print(f"Exception: {e}, try {i} times ...\n")
+            print(f"Exception: {e}, try {kk} times ...\n")
             if kk > max_try:
                 break
 
