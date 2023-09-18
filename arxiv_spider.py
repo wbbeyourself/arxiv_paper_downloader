@@ -278,7 +278,7 @@ for i, js in tqdm(enumerate(result)):
         continue
     
     md_block = []
-    md_block.append(f"## [{i+1}]{title}\n")
+    md_block.append(f"## 【{i+1}】{title}\n")
     md_block.append(f"- arXiv id: {arxiv_id}\n")
     md_block.append(f"- PDF LINK: {pdf_link}\n")
     md_block.append(f"- authors: {authors}\n")
