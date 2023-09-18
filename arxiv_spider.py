@@ -95,6 +95,8 @@ cur_dir = f"{ROOT_DIR}/arxiv_papers/{date_str}"
 os.makedirs(cur_dir, exist_ok=True)
 
 
+import platform
+
 def add_watermark(image_path, watermark_text):
     image = Image.open(image_path)
     width, height = image.size
@@ -105,7 +107,15 @@ def add_watermark(image_path, watermark_text):
 
     # 在新图片上添加水印
     draw = ImageDraw.Draw(new_image)
-    font = ImageFont.truetype('arial.ttf', 60)  # 使用Arial字体，字号为60
+
+    # 判断当前系统类型，选择字体
+    if platform.system() == 'Windows':
+        font = ImageFont.truetype('arial.ttf', 60)  # 使用Arial字体，字号为60
+    elif platform.system() == 'Darwin':  # Mac
+        font = ImageFont.truetype('/System/Library/Fonts/PingFang.ttc', 60)  # 使用Mac自带字体PingFang，字号为60
+    else:
+        raise Exception('Unsupported system type')
+
     text_bbox = draw.textbbox((0, 0), watermark_text, font=font)
     text_width = text_bbox[2] - text_bbox[0]
     text_height = text_bbox[3] - text_bbox[1]
@@ -250,6 +260,7 @@ for i, js in tqdm(enumerate(result)):
     print(f"processing {i+1}/{total} {title} ...")
     max_try = 5
     kk = 0
+    failed = False
     while True:
         kk += 1
         try:
@@ -259,8 +270,13 @@ for i, js in tqdm(enumerate(result)):
         except Exception as e:
             print(f"Exception: {e}, try {kk} times ...\n")
             if kk > max_try:
+                failed = True
                 break
-
+    
+    if failed:
+        print(f"download {title} failed! skip ...")
+        continue
+    
     md_block = []
     md_block.append(f"## [{i+1}]{title}\n")
     md_block.append(f"- arXiv id: {arxiv_id}\n")
