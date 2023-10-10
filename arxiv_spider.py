@@ -44,12 +44,16 @@ def convert_date_format(s):
 
 def get_reponse(url):
     try:
+        # print(f"url: {url}")
         response = requests.get(url)
         if response.status_code == 200:
             return response
+        elif response.status_code == 500:
+            return None
         else:
             raise Exception(f'Network is down, status code: {response.status_code}')
-    except:
+    except Exception as e:
+        print(f"e: {e}, try proxy !")
         proxy = "http://127.0.0.1:7890"
         proxies = {
             'http': proxy,
@@ -154,6 +158,9 @@ def download_pdf_image(url, title, arxiv_id, watermark_text, index):
 
     # 下载PDF文件
     response = get_reponse(url)
+    if not response:
+        print(f"no pdf file for : {title}")
+        return None, None
     with open(pdf_path, 'wb') as f:
         f.write(response.content)
 
@@ -283,8 +290,9 @@ for i, js in tqdm(enumerate(result)):
     md_block.append(f"- PDF LINK: {pdf_link}\n")
     md_block.append(f"- authors: {authors}\n")
     md_block.append(f"- comments: {comments}\n")
-    md_block.append(f"- [PDF FILE]({pdf_relative_path})\n\n")
-    md_block.append(f"![fisrt page]({img_relative_path})\n\n\n")
+    if pdf_relative_path:
+        md_block.append(f"- [PDF FILE]({pdf_relative_path})\n\n")
+        md_block.append(f"![fisrt page]({img_relative_path})\n\n\n")
     append_file(md_path, md_block)
 
 
