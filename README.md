@@ -38,3 +38,6 @@ python arxiv_spider.py /path/to/your/folder
 - [ ] Demo videos.
 - [x] Use VPN Arg Parse. 
 
+## Useful Arxiv Related Repos
+- https://github.com/lukasschwab/arxiv.py
+- https://github.com/braun-steven/arxiv-downloader
