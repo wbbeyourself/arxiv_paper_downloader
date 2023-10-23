@@ -8,6 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 from pdf2image import convert_from_bytes
+from PyPDF2 import PdfReader
 from PIL import Image, ImageDraw, ImageFont
 import logging
 import platform
@@ -51,6 +52,19 @@ def convert_date_format(s):
     return converted_date
 
 
+# 判断 pdf 文件是否损坏
+def is_pdf_file_corrupted(file_path):
+    base_name = os.path.basename(file_path)
+    try:
+        with open(file_path, "rb") as file:
+            reader = PdfReader(file)
+            if len(reader.pages) > 0:  # 如果能读取到页数，说明文件没有损坏
+                return False
+    except Exception as e:
+        print(f"file: {base_name[:80]} ... corrupted!\nException: {e}")
+        return True  # 如果在尝试读取文件时抛出异常，说明文件可能已经损坏
+
+
 def get_latest_n_date_strings(n=1):
     date_strings = []
     today = datetime.now().date()
@@ -61,8 +75,32 @@ def get_latest_n_date_strings(n=1):
     return date_strings
 
 
-def add_watermark(image_path, watermark_text):
-    image = Image.open(image_path)
+def add_watermark(pdf_path, watermark_text):
+    base_name: str = os.path.basename(pdf_path)
+    root_dir = os.path.dirname(os.path.dirname(pdf_path))
+    img_dir = join(root_dir, 'imgs')
+    os.makedirs(img_dir, exist_ok=True)
+    img_filename = base_name.replace('.pdf', '.jpg')
+
+    image_abs_path = join(img_dir, img_filename)
+    image_relative_path = join('./imgs', img_filename)
+
+    if os.path.exists(image_abs_path):
+        print(f"\nskip {image_abs_path} ...\n")
+        return image_relative_path
+
+    # 打开并读取PDF文件
+    with open(pdf_path, "rb") as file:
+        pdf_bytes = file.read()
+
+    # 将PDF文件转换为图像
+    images = convert_from_bytes(pdf_bytes)
+
+    image = images[0]
+    if not watermark_text:
+        image.save(image_abs_path, 'JPEG')
+        return image_relative_path
+    
     width, height = image.size
 
     # 创建一个新的图片对象，大小与原图一致
@@ -86,8 +124,9 @@ def add_watermark(image_path, watermark_text):
     text_position = ((width - text_width) // 2, height - 60)
     draw.text(text_position, watermark_text, font=font, fill=(255, 0, 0))
     # 保存新图片
-    new_image.save(image_path)
-    return 0
+    new_image.save(image_abs_path, 'JPEG')
+    
+    return image_relative_path
 
 
 def get_reponse(url):
@@ -186,6 +225,37 @@ def check_markdown_file(md_path):
     return skip
 
 
+def do_paper_download(paper: arxiv.Result, pdf_dir, pdf_filename):
+    status = 0
+    max_try = 3
+    pdf_abs_path = join(pdf_dir, pdf_filename)
+    is_existed = os.path.exists(pdf_abs_path)
+    is_file_corrupted = False
+    if is_existed:
+        is_file_corrupted = is_pdf_file_corrupted(pdf_abs_path)
+
+    if (not is_existed) or (is_existed and is_file_corrupted):
+        j = 0
+        if is_file_corrupted:
+            print(f"\n\nDownloading {pdf_filename} Again ...!\n\n")
+        while j < max_try+1:
+            try:
+                paper.download_pdf(pdf_dir, pdf_filename)
+                print(f"Download Done!\n\n")
+                break
+            except Exception as e:
+                print(f"Download pdf exception: \n{e}\n")
+            j += 1
+            print(f"try {j} times ...")
+            time.sleep(2)
+            if j == max_try:
+                status = -1
+                return status
+    else:
+        print(f"Skip {pdf_filename} ...")
+    return status
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--root_dir", type=str, required=True, help="root dir to place pdfs.")
@@ -208,7 +278,7 @@ if __name__ == '__main__':
         print(f"day: {date_str}")
         print()
         cur_dir = join(cur_root_dir, date_str)
-        os.makedirs(cur_root_dir, exist_ok=True)
+        os.makedirs(cur_dir, exist_ok=True)
 
         md_path = join(cur_dir, f'arxiv_{date_str}.md')
         skip = check_markdown_file(md_path)
@@ -221,112 +291,42 @@ if __name__ == '__main__':
 
         for j, (d, paper) in enumerate(zip(papers, result_lst)):
             index = j + 1
+            
             print(f"index: {index}")
             arxiv_id = d['arxiv_id']
             title = d['title']
             # print(d)
 
-            print(f"\n\nDownloading {index}/{total} {arxiv_id}   {title}\n\n")
-            try:
-                kkk = 1
-                truncated_title = get_valid_title(title)
-                authors= [a.name for a in paper.authors]
-                authors_str = ', '.join(authors)
-                pdf_url = paper.pdf_url[:-2]
-                comment = paper.comment
-                # updated_date = datetime_to_date_str(paper.updated)
-                # published_date = datetime_to_date_str(paper.published)
-                # paper.download_pdf(dirpath="./mydir")
-                pdf_dir = join(cur_dir, 'pdfs')
-                pdf_filename = f'{date_str}_{index}__{arxiv_id}__{title}.pdf'
-                pdf_relative_path = f'./pdfs/{pdf_filename}'
-                paper.download_pdf(dirpath=pdf_dir, filename=pdf_filename)
+            print(f"\n\nDownloading {date_str} {index}/{total} {arxiv_id}   {title}\n\n")
+            
+            truncated_title = get_valid_title(title)
+            authors= [a.name for a in paper.authors]
+            authors_str = ', '.join(authors)
+            pdf_url = paper.pdf_url[:-2]
+            comment = paper.comment
+            # updated_date = datetime_to_date_str(paper.updated)
+            # published_date = datetime_to_date_str(paper.published)
+            # paper.download_pdf(dirpath="./mydir")
+            pdf_dir = join(cur_dir, 'pdfs')
+            os.makedirs(pdf_dir, exist_ok=True)
+            index = add_leading_zeros(index)
+            pdf_filename = f'{date_str}_{index}__{arxiv_id}__{truncated_title}.pdf'
+            pdf_relative_path = f'./pdfs/{pdf_filename}'
+            pdf_abs_path = join(pdf_dir, pdf_filename)
 
-                # pdf_link = js['pdf_link']
-                # comments = js['comments']
-                # authors = js['authors']
-                # comments = js['comments']
-            except Exception as e:
-                pass
-    
-    pass
+            status = do_paper_download(paper, pdf_dir, pdf_filename)
 
-
-
-
-
-
-
-
-####################################
-
-
-
-
-
-
-
-# result = crawl_html(arxiv)
-
-
-
-# # 保存结果到文件
-# json_path = f'{cur_dir}/arxiv_{date_str}.json'
-# with open(json_path, 'w', encoding='utf-8') as file:
-#     json.dump(result, file, ensure_ascii=False, indent=2)
-
-
-# md_path = f'{cur_dir}/arxiv_{date_str}.md'
-# if os.path.exists(md_path):
-#     if not overwrite:
-#         print(f'{date_str}.md already exists! Add --overwrite to rewrite!')
-#         sys.exit(-1)
-#     else:
-#         with open(md_path, 'w', encoding='utf-8') as fp:
-#             # create empty md file
-#             pass
-
-
-# total = len(result)
-# for i, js in tqdm(enumerate(result)):
-#     title = js['title']
-#     truncated_title = get_valid_title(title)
-#     arxiv_id = js['arxiv_id']
-#     pdf_link = js['pdf_link']
-#     comments = js['comments']
-#     authors = js['authors']
-#     comments = js['comments']
-#     print(f"processing {i+1}/{total} {title} ...")
-#     max_try = 5
-#     kk = 0
-#     failed = False
-#     while True:
-#         kk += 1
-#         try:
-#             pdf_relative_path, img_relative_path = \
-#                 download_pdf_image(pdf_link, truncated_title, arxiv_id, comments, i+1)
-#             break
-#         except Exception as e:
-#             print(f"Exception: {e}, try {kk} times ...\n")
-#             if kk > max_try:
-#                 failed = True
-#                 break
-    
-#     if failed:
-#         print(f"download {title} failed! skip ...")
-#         continue
-    
-#     md_block = []
-#     md_block.append(f"## 【{i+1}】{title}\n")
-#     md_block.append(f"- arXiv id: {arxiv_id}\n")
-#     md_block.append(f"- PDF LINK: {pdf_link}\n")
-#     md_block.append(f"- authors: {authors}\n")
-#     md_block.append(f"- comments: {comments}\n")
-#     if pdf_relative_path:
-#         md_block.append(f"- [PDF FILE]({pdf_relative_path})\n\n")
-#         md_block.append(f"![fisrt page]({img_relative_path})\n\n\n")
-#     append_file(md_path, md_block)
-
-
-# print('\n\ndone!!!')
-# print(date_str)
+            md_block = []
+            md_block.append(f"## 【{j+1}】{title}\n")
+            md_block.append(f"- arXiv id: {arxiv_id}\n")
+            md_block.append(f"- PDF LINK: {pdf_url}\n")
+            md_block.append(f"- authors: {authors_str}\n")
+            md_block.append(f"- comments: {comment}\n")
+            # 下载正常
+            if status == 0:
+                img_relative_path = add_watermark(pdf_abs_path, watermark_text=comment)
+                md_block.append(f"- [PDF FILE]({pdf_relative_path})\n\n")
+                md_block.append(f"![fisrt page]({img_relative_path})\n\n\n")
+            
+            append_file(md_path, md_block)
+        print(f"\n\nDay: {date_str} done!\n\n")
