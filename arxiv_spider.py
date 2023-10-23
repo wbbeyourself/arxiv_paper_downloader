@@ -292,7 +292,7 @@ if __name__ == '__main__':
         for j, (d, paper) in enumerate(zip(papers, result_lst)):
             index = j + 1
             
-            print(f"index: {index}")
+            print(f"index: {index}/{total}  {date_str}")
             arxiv_id = d['arxiv_id']
             title = d['title']
             # print(d)
