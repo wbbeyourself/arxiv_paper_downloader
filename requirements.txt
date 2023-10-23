@@ -5,3 +5,5 @@ matplotlib
 wordcloud
 pillow
 pdf2image
+arxiv
+PyPDF2
