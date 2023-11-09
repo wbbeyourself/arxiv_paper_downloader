@@ -6,7 +6,7 @@
 pip install -r requirements.txt
 ```
 
-
+Windows system meets `pdf2image` related errors, see [issue_markdown](./issue_bugs.md) for solution.
 
 ## usage
 
