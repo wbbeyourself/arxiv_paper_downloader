@@ -83,7 +83,7 @@ def add_watermark(pdf_path, watermark_text):
     img_filename = base_name.replace('.pdf', '.jpg')
 
     image_abs_path = join(img_dir, img_filename)
-    image_relative_path = join('./imgs', img_filename)
+    image_relative_path = f"./imgs/{img_filename}"
 
     if os.path.exists(image_abs_path):
         print(f"\nskip {image_abs_path} ...\n")

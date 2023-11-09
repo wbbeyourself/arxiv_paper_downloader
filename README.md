@@ -25,10 +25,15 @@ python filter_papers.py --keywords keyword1 keyword2 keyword3
 
 ### 2. Download Arxiv papers
 
-Download the latest daily research paper PDF, generate corresponding markdown and preview images.
+Download the latest n day research paper PDF, generate corresponding markdown and preview images.
 
 ```bash
-python arxiv_spider.py /path/to/your/folder
+python arxiv_spider.py  --root_dir  /your/papers/dir/path  --days n
+```
+
+If you want to overwrite previous markdowns, use
+```bash
+python arxiv_spider.py  --root_dir  /your/papers/dir/path  --days n  --overwrite
 ```
 
 ## todo
