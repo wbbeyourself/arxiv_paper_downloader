@@ -238,19 +238,29 @@ def do_paper_download(paper: arxiv.Result, pdf_dir, pdf_filename):
         j = 0
         if is_file_corrupted:
             print(f"\n\nDownloading {pdf_filename} Again ...!\n\n")
-        while j < max_try+1:
+        while j < max_try:
             try:
                 paper.download_pdf(pdf_dir, pdf_filename)
-                print(f"Download Done!\n\n")
-                break
+
+                is_file_corrupted = is_pdf_file_corrupted(pdf_abs_path)
+                if is_file_corrupted:
+                    print(f"\n\nPDF Corrupted! Downloading {pdf_filename} Again...!\n\n")
+                    j += 1
+                    print(f"try {j} times ...")
+                    time.sleep(2)
+                    continue
+                else:
+                    print(f"Download {pdf_filename} Done!\n\n")
+                    break
             except Exception as e:
                 print(f"Download pdf exception: \n{e}\n")
             j += 1
             print(f"try {j} times ...")
             time.sleep(2)
-            if j == max_try:
-                status = -1
-                return status
+        if j == max_try:
+            status = -1
+            print(f"Download {pdf_filename} Failed!\n\n")
+            return status
     else:
         print(f"Skip {pdf_filename} ...")
     return status
@@ -319,7 +329,9 @@ if __name__ == '__main__':
             md_block = []
             md_block.append(f"## 【{j+1}】{title}\n")
             md_block.append(f"- arXiv id: {arxiv_id}\n")
-            md_block.append(f"- PDF LINK: {pdf_url}\n")
+            paper_abs_url = pdf_url.replace('pdf', 'abs')
+            # md_block.append(f"- PDF LINK: {pdf_url}\n")
+            md_block.append(f"- Arxiv LINK: {paper_abs_url}\n")
             md_block.append(f"- authors: {authors_str}\n")
             md_block.append(f"- comments: {comment}\n")
             # 下载正常
