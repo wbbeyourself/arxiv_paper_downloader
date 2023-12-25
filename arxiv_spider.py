@@ -329,6 +329,7 @@ if __name__ == '__main__':
             md_block = []
             md_block.append(f"## 【{j+1}】{title}\n")
             md_block.append(f"- arXiv id: {arxiv_id}\n")
+            md_block.append(f"- date_str: {date_str}\n")
             paper_abs_url = pdf_url.replace('pdf', 'abs')
             # md_block.append(f"- PDF LINK: {pdf_url}\n")
             md_block.append(f"- Arxiv LINK: {paper_abs_url}\n")
