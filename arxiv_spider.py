@@ -83,6 +83,7 @@ def add_watermark(pdf_path, watermark_text):
     img_filename = base_name.replace('.pdf', '.jpg')
 
     image_abs_path = join(img_dir, img_filename)
+    image_abs_path = image_abs_path.replace('\\', '/')
     image_relative_path = f"./imgs/{img_filename}"
 
     if os.path.exists(image_abs_path):
@@ -288,6 +289,7 @@ if __name__ == '__main__':
         print(f"day: {date_str}")
         print()
         cur_dir = join(cur_root_dir, date_str)
+        cur_dir = cur_dir.replace('\\', '/')
         os.makedirs(cur_dir, exist_ok=True)
 
         md_path = join(cur_dir, f'arxiv_{date_str}.md')
@@ -338,7 +340,12 @@ if __name__ == '__main__':
             # 下载正常
             if status == 0:
                 img_relative_path = add_watermark(pdf_abs_path, watermark_text=comment)
-                md_block.append(f"- [PDF FILE]({pdf_relative_path})\n\n")
+                md_block.append(f"- [Relative PDF FILE]({pdf_relative_path})\n")
+                pdf_aboslute_path = cur_dir + pdf_relative_path[1:]
+                # print(f"cur_dir: {cur_dir}")
+                # print(f"pdf_relative_path: {pdf_relative_path}")
+                # print(f"pdf_aboslute_path: {pdf_aboslute_path}")
+                md_block.append(f"- [Aboslute PDF FILE]({pdf_aboslute_path})\n\n")
                 md_block.append(f"![fisrt page]({img_relative_path})\n\n\n")
             
             append_file(md_path, md_block)
