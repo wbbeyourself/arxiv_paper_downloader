@@ -23,6 +23,17 @@ ROOT_DIR = ''
 OVERWRITE_MARKDOWN = False
 ARXIV_LATEST_PAPER_URL = 'https://arxiv.org/list/cs.CL/pastweek?show=500'  # 替换为你要爬取的url
 
+
+collapse_html = """<details>
+  <summary>点击展开/收起图片({text})</summary>
+  <img src="{imageUrl}" alt="论文首图">
+</details>
+"""
+
+def get_images_collapse_html(text, imageUrl):
+    html = collapse_html.format(text=text, imageUrl=imageUrl)
+    return html
+
 def datetime_to_date_str(d: datetime):
     return d.strftime('%Y-%m-%d')
 
@@ -88,7 +99,7 @@ def add_watermark(pdf_path, watermark_text):
 
     if os.path.exists(image_abs_path):
         print(f"\nskip {image_abs_path} ...\n")
-        return image_relative_path
+        return image_relative_path, image_abs_path
 
     # 打开并读取PDF文件
     with open(pdf_path, "rb") as file:
@@ -100,7 +111,7 @@ def add_watermark(pdf_path, watermark_text):
     image = images[0]
     if not watermark_text:
         image.save(image_abs_path, 'JPEG')
-        return image_relative_path
+        return image_relative_path, image_abs_path
     
     width, height = image.size
 
@@ -127,7 +138,7 @@ def add_watermark(pdf_path, watermark_text):
     # 保存新图片
     new_image.save(image_abs_path, 'JPEG')
     
-    return image_relative_path
+    return image_relative_path, image_abs_path
 
 
 def get_reponse(url):
@@ -339,14 +350,18 @@ if __name__ == '__main__':
             md_block.append(f"- comments: {comment}\n")
             # 下载正常
             if status == 0:
-                img_relative_path = add_watermark(pdf_abs_path, watermark_text=comment)
+                img_relative_path, image_abs_path = add_watermark(pdf_abs_path, watermark_text=comment)
                 md_block.append(f"- [Relative PDF FILE]({pdf_relative_path})\n")
                 pdf_aboslute_path = cur_dir + pdf_relative_path[1:]
                 # print(f"cur_dir: {cur_dir}")
                 # print(f"pdf_relative_path: {pdf_relative_path}")
                 # print(f"pdf_aboslute_path: {pdf_aboslute_path}")
                 md_block.append(f"- [Aboslute PDF FILE]({pdf_aboslute_path})\n\n")
-                md_block.append(f"![fisrt page]({img_relative_path})\n\n\n")
+                # md_block.append(f"![fisrt page]({img_relative_path})\n\n\n")
+                relative_image_html = get_images_collapse_html('通用', img_relative_path)
+                abs_image_html = get_images_collapse_html('Obsidian', image_abs_path)
+                md_block.append(f"{relative_image_html}\n")
+                md_block.append(f"{abs_image_html}\n")
             
             append_file(md_path, md_block)
         print(f"\n\nDay: {date_str} done!\n\n")
