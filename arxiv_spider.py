@@ -106,7 +106,17 @@ def add_watermark(pdf_path, watermark_text):
         pdf_bytes = file.read()
 
     # 将PDF文件转换为图像
-    images = convert_from_bytes(pdf_bytes)
+    max_try = 3
+    i = -1
+    while True:
+        i += 1
+        try:
+            images = convert_from_bytes(pdf_bytes)
+            break
+        except Exception as e:
+            print(f"pdf: {base_name[:80]} ... corrupted! Try: {i} times. \nException: {e}")
+            if i >= max_try:
+                return None, None
 
     image = images[0]
     if not watermark_text:
@@ -351,17 +361,17 @@ if __name__ == '__main__':
             # 下载正常
             if status == 0:
                 img_relative_path, image_abs_path = add_watermark(pdf_abs_path, watermark_text=comment)
+                
                 md_block.append(f"- [Relative PDF FILE]({pdf_relative_path})\n")
                 pdf_aboslute_path = cur_dir + pdf_relative_path[1:]
-                # print(f"cur_dir: {cur_dir}")
-                # print(f"pdf_relative_path: {pdf_relative_path}")
-                # print(f"pdf_aboslute_path: {pdf_aboslute_path}")
                 md_block.append(f"- [Aboslute PDF FILE]({pdf_aboslute_path})\n\n")
-                # md_block.append(f"![fisrt page]({img_relative_path})\n\n\n")
-                relative_image_html = get_images_collapse_html('通用', img_relative_path)
-                abs_image_html = get_images_collapse_html('Obsidian', image_abs_path)
-                md_block.append(f"{relative_image_html}\n")
-                md_block.append(f"{abs_image_html}\n")
-            
+                if img_relative_path:
+                    relative_image_html = get_images_collapse_html('通用', img_relative_path)
+                    abs_image_html = get_images_collapse_html('Obsidian', image_abs_path)
+                    md_block.append(f"{relative_image_html}\n")
+                    md_block.append(f"{abs_image_html}\n")
+                else:
+                    print(f"add watermark failed! {img_relative_path}")
+                    md_block.append(f"- images: no images\n")
             append_file(md_path, md_block)
         print(f"\n\nDay: {date_str} done!\n\n")
