@@ -56,7 +56,13 @@ def convert_date_format(s):
     output_format = "%Y-%m-%d"
     
     # 将输入字符串转换为datetime对象
+    print(s)
+    # Wed, 8 May 2024 (showing 41 of 41 entries )
+    if 'showing' in s:
+        s = s.split('(')[0].strip()
+    print(s)
     date_obj = datetime.strptime(s, input_format)
+    # print(date_obj)
     # 将datetime对象转换为指定格式的字符串
     converted_date = date_obj.strftime(output_format)
     
@@ -272,7 +278,7 @@ def do_paper_download(paper: arxiv.Result, pdf_dir, pdf_filename):
                     time.sleep(2)
                     continue
                 else:
-                    print(f"Download {pdf_filename} Done!\n\n")
+                    print(f"Download pdf Done!\n\n")
                     break
             except Exception as e:
                 print(f"Download pdf exception: \n{e}\n")
@@ -299,7 +305,7 @@ if __name__ == '__main__':
     days = args.days
     OVERWRITE_MARKDOWN = True if args.overwrite else False
 
-    cur_root_dir = join(ROOT_DIR, 'arxiv_papers')
+    cur_root_dir = join(ROOT_DIR, 'arxiv_papers2')
     os.makedirs(cur_root_dir, exist_ok=True)
     # cur_dir = f"{CUR_ROOT_DIR}/{date_str}"
 
