@@ -366,7 +366,9 @@ if __name__ == '__main__':
             md_block.append(f"- comments: {comment}\n")
             # 下载正常
             if status == 0:
-                img_relative_path, image_abs_path = add_watermark(pdf_abs_path, watermark_text=comment)
+                # todo: fix pafinfo.exe bugs: can't find libdeflate.dll
+                # img_relative_path, image_abs_path = add_watermark(pdf_abs_path, watermark_text=comment)
+                img_relative_path, image_abs_path = None, None
                 
                 md_block.append(f"- [Relative PDF FILE]({pdf_relative_path})\n")
                 pdf_aboslute_path = cur_dir + pdf_relative_path[1:]
