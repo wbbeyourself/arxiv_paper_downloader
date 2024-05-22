@@ -24,12 +24,13 @@ python arxiv_spider.py  --root_dir  /your/papers/dir/path  --days n  --overwrite
 ```
 
 ## todo
+- [x] Highlight target conferences and authors.
+- [x] Highlight custom keyword list.
+- [x] Use VPN Arg Parse. 
 - [ ] Maintain an index database of all papers for quick search and reference.
-- [ ] Highlight target conferences and authors.
-- [ ] Highlight custom keyword list.
 - [ ] Customize the specific areas of interest, such as CS.CL and CS.CV.
 - [ ] Demo videos.
-- [x] Use VPN Arg Parse. 
+
 
 ## Useful Arxiv Related Repos
 - https://github.com/lukasschwab/arxiv.py

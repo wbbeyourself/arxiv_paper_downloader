@@ -13,9 +13,11 @@ from PIL import Image, ImageDraw, ImageFont
 import logging
 import platform
 import arxiv
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from tqdm import tqdm
 from typing import List
+from config import STAR_AUTHORS, STAR_KEYWORDS, STAR_MEETINGS
 logging.basicConfig(level=logging.DEBUG)
 client = arxiv.Client()
 
@@ -294,6 +296,85 @@ def do_paper_download(paper: arxiv.Result, pdf_dir, pdf_filename):
     return status
 
 
+@dataclass
+class Paper:
+    title: str = ""
+    arxiv_id: str = ""
+    date_str: str = ""
+    arxiv_link: str = ""
+    authors: List[str] = None
+    comments: str = ""
+    relative_pdf_path: str = ""
+    absolute_pdf_path: str = ""
+    image_path: str = ""
+    importance: int = 1
+    highlight: str = ""
+    
+    def get_md_string(self, index=1):
+        md_block = []
+        authors_str = ', '.join(self.authors)
+        md_block.append(f"## 【{index+1}】{self.title}\n")
+        md_block.append(f"- arXiv id: {self.arxiv_id}\n")
+        md_block.append(f"- date_str: {self.date_str}\n")
+        md_block.append(f"- arxiv link: {self.arxiv_link}\n")
+        md_block.append(f"- authors: {authors_str}\n")
+        md_block.append(f"- comments: {self.comments}\n")
+        if self.absolute_pdf_path:
+            md_block.append(f"- [Relative PDF FILE]({self.relative_pdf_path})\n")
+            md_block.append(f"- [Absolute PDF FILE]({self.absolute_pdf_path})\n")
+        if self.highlight:
+            md_block.append(self.highlight)
+        else:
+            md_block.append('\n')
+        return md_block
+    
+    
+    def get_highlight_string(self, text_lst):
+        s = ', '.join(text_lst)
+        s = f'<font color="red"><b>{s}</b></font>'
+        return s
+    
+    def calc_importance(self):
+        find_authors = []
+        for a in self.authors:
+            if a in STAR_AUTHORS:
+                self.importance += 1
+                find_authors.append(a)
+        
+        find_keywords = []
+        for k in STAR_KEYWORDS:
+            if k in self.title:
+                self.importance += 1
+                find_keywords.append(k)
+        
+        find_meetings = []
+        if self.comments:
+            for m in STAR_MEETINGS:
+                if m in self.comments:
+                    duplicated = False
+                    if find_meetings:
+                        for cur_find in find_meetings:
+                            if m in cur_find:
+                                duplicated = True
+                    if duplicated:
+                        continue
+                    self.importance += 1
+                    find_meetings.append(m)
+        
+        if self.importance == 1:
+            return
+        
+        text = ''
+        if find_authors:
+            text += f"- Star Authors: {self.get_highlight_string(find_authors)}\n"
+        if find_keywords:
+            text += f"- Star Keywords: {self.get_highlight_string(find_keywords)}\n"
+        if find_meetings:
+            text += f"- Star Meetings: {self.get_highlight_string(find_meetings)}\n"
+        self.highlight = text
+        return
+            
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--root_dir", type=str, required=True, help="root dir to place pdfs.")
@@ -328,24 +409,31 @@ if __name__ == '__main__':
 
         result_lst = client.results(arxiv.Search(id_list=arxiv_id_lst))
 
+        today_papers = []
         for j, (d, paper) in enumerate(zip(papers, result_lst)):
             index = j + 1
+            
+            paper_obj = Paper()
+            paper_obj.date_str = date_str
             
             print(f"index: {index}/{total}  {date_str}")
             arxiv_id = d['arxiv_id']
             title = d['title']
+            
+            paper_obj.arxiv_id = arxiv_id
+            paper_obj.title = title
             # print(d)
 
             print(f"\n\nDownloading {date_str} {index}/{total} {arxiv_id}   {title}\n\n")
             
             truncated_title = get_valid_title(title)
             authors= [a.name for a in paper.authors]
-            authors_str = ', '.join(authors)
+            
+            paper_obj.authors = authors
+            
             pdf_url = paper.pdf_url[:-2]
             comment = paper.comment
-            # updated_date = datetime_to_date_str(paper.updated)
-            # published_date = datetime_to_date_str(paper.published)
-            # paper.download_pdf(dirpath="./mydir")
+            paper_obj.comments = comment
             pdf_dir = join(cur_dir, 'pdfs')
             os.makedirs(pdf_dir, exist_ok=True)
             index = add_leading_zeros(index)
@@ -354,32 +442,34 @@ if __name__ == '__main__':
             pdf_abs_path = join(pdf_dir, pdf_filename)
 
             status = do_paper_download(paper, pdf_dir, pdf_filename)
-
-            md_block = []
-            md_block.append(f"## 【{j+1}】{title}\n")
-            md_block.append(f"- arXiv id: {arxiv_id}\n")
-            md_block.append(f"- date_str: {date_str}\n")
             paper_abs_url = pdf_url.replace('pdf', 'abs')
-            # md_block.append(f"- PDF LINK: {pdf_url}\n")
-            md_block.append(f"- Arxiv LINK: {paper_abs_url}\n")
-            md_block.append(f"- authors: {authors_str}\n")
-            md_block.append(f"- comments: {comment}\n")
+            
+            paper_obj.arxiv_link = paper_abs_url
             # 下载正常
             if status == 0:
                 # todo: fix pafinfo.exe bugs: can't find libdeflate.dll
                 # img_relative_path, image_abs_path = add_watermark(pdf_abs_path, watermark_text=comment)
                 img_relative_path, image_abs_path = None, None
                 
-                md_block.append(f"- [Relative PDF FILE]({pdf_relative_path})\n")
                 pdf_aboslute_path = cur_dir + pdf_relative_path[1:]
-                md_block.append(f"- [Aboslute PDF FILE]({pdf_aboslute_path})\n\n")
-                if img_relative_path:
-                    relative_image_html = get_images_collapse_html('通用', img_relative_path)
-                    abs_image_html = get_images_collapse_html('Obsidian', image_abs_path)
-                    md_block.append(f"{relative_image_html}\n")
-                    md_block.append(f"{abs_image_html}\n")
-                else:
-                    print(f"add watermark failed! {img_relative_path}")
-                    md_block.append(f"- images: no images\n")
-            append_file(md_path, md_block)
+                paper_obj.relative_pdf_path = pdf_relative_path
+                paper_obj.absolute_pdf_path = pdf_aboslute_path
+                
+                # if img_relative_path:
+                #     relative_image_html = get_images_collapse_html('通用', img_relative_path)
+                #     abs_image_html = get_images_collapse_html('Obsidian', image_abs_path)
+                #     md_block.append(f"{relative_image_html}\n")
+                #     md_block.append(f"{abs_image_html}\n")
+                # else:
+                #     print(f"add watermark failed! {img_relative_path}")
+                #     md_block.append(f"- images: no images\n")
+        
+            paper_obj.calc_importance()
+            today_papers.append(paper_obj)
+        
+        # sort this day paper
+        today_papers = sorted(today_papers, key=lambda x: x.importance, reverse=True)
+        for index, paper in enumerate(today_papers):
+            cur_block = paper.get_md_string(index)
+            append_file(md_path, cur_block)
         print(f"\n\nDay: {date_str} done!\n\n")
