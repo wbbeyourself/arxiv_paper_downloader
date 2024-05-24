@@ -4,7 +4,7 @@
 STAR_KEYWORDS = ['Text-to-SQL']
 
 # add your authors here
-_AUTHOR_GROUP1 = ['Zhoujun Li', 'Wanxiang Che', 'Zhiyuan Liu', 'Dawn Song', 'Kaiming He', 'Min-Yen Kan', 'Jian-Guang Lou', 'Yan Gao', 'Jiajun Zhang']
+_AUTHOR_GROUP1 = ['Zhoujun Li', 'Wanxiang Che', 'Zhiyuan Liu', 'Dawn Song', 'Kaiming He', 'Min-Yen Kan', 'Jian-Guang Lou', 'Yan Gao', 'Jiajun Zhang', 'Ji-Rong Wen']
 _AUTHOR_GROUP2 = ['Qian Liu', 'Libo Qin', 'Li Dong', 'Xinyun Chen', 'Tao Yu', 'Danqi Chen', 'Diyi Yang', 'Jason Wei']
 _AUTHOR_GROUP3 = ['Jiuxiang Gu']
 STAR_AUTHORS = _AUTHOR_GROUP1 + _AUTHOR_GROUP2 + _AUTHOR_GROUP3
