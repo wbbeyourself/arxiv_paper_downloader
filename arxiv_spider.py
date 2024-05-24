@@ -306,9 +306,12 @@ class Paper:
     comments: str = ""
     relative_pdf_path: str = ""
     absolute_pdf_path: str = ""
+    img_relative_path: str = ""
+    image_abs_path: str = ""
     image_path: str = ""
     importance: int = 1
     highlight: str = ""
+    
     
     def get_md_string(self, index=1):
         md_block = []
@@ -324,8 +327,15 @@ class Paper:
             md_block.append(f"- [Absolute PDF FILE]({self.absolute_pdf_path})\n")
         if self.highlight:
             md_block.append(self.highlight)
+        
+        if self.img_relative_path:
+            relative_image_html = get_images_collapse_html('通用', self.img_relative_path)
+            abs_image_html = get_images_collapse_html('Obsidian', self.image_abs_path)
+            md_block.append(f"{relative_image_html}\n")
+            md_block.append(f"{abs_image_html}\n")
         else:
-            md_block.append('\n')
+            md_block.append(f"- images: no images\n")
+        md_block.append('\n')
         return md_block
     
     
@@ -447,28 +457,21 @@ if __name__ == '__main__':
             paper_obj.arxiv_link = paper_abs_url
             # 下载正常
             if status == 0:
-                # todo: fix pafinfo.exe bugs: can't find libdeflate.dll
-                # img_relative_path, image_abs_path = add_watermark(pdf_abs_path, watermark_text=comment)
-                img_relative_path, image_abs_path = None, None
+                img_relative_path, image_abs_path = add_watermark(pdf_abs_path, watermark_text=comment)
                 
                 pdf_aboslute_path = cur_dir + pdf_relative_path[1:]
                 paper_obj.relative_pdf_path = pdf_relative_path
                 paper_obj.absolute_pdf_path = pdf_aboslute_path
+                paper_obj.img_relative_path = img_relative_path
+                paper_obj.image_abs_path = image_abs_path
                 
-                # if img_relative_path:
-                #     relative_image_html = get_images_collapse_html('通用', img_relative_path)
-                #     abs_image_html = get_images_collapse_html('Obsidian', image_abs_path)
-                #     md_block.append(f"{relative_image_html}\n")
-                #     md_block.append(f"{abs_image_html}\n")
-                # else:
-                #     print(f"add watermark failed! {img_relative_path}")
-                #     md_block.append(f"- images: no images\n")
+                
         
             paper_obj.calc_importance()
             today_papers.append(paper_obj)
         
         # sort this day paper
-        today_papers = sorted(today_papers, key=lambda x: x.importance, reverse=True)
+        today_papers: List[Paper] = sorted(today_papers, key=lambda x: x.importance, reverse=True)
         for index, paper in enumerate(today_papers):
             cur_block = paper.get_md_string(index)
             append_file(md_path, cur_block)

@@ -11,6 +11,13 @@ Windows users will have to build or download poppler for Windows. I recommend [@
 参考链接：[https://github.com/Belval/pdf2image](https://github.com/Belval/pdf2image)
 
 
+## 报错1-2: pdf2image.exceptions.PDFPageCountError: Unable to get page count.
+
+系统报错弹窗：由于找不到 libdeflate.dll，无法继续执行代码。xxx
+
+解决方案：去[该网站](https://www.dllme.com/dll/files/libdeflate)下载对应dll，然后放到 `C:\ProgramFiles\poppler_bin` 目录下即可。
+
+
 ## 报错2：ImportError: DLL load failed while importing _imaging: 找不到指定的模块。
 
 ```text
