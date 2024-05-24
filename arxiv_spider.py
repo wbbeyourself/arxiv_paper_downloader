@@ -32,8 +32,17 @@ collapse_html = """<details>
 </details>
 """
 
-def get_images_collapse_html(text, imageUrl):
-    html = collapse_html.format(text=text, imageUrl=imageUrl)
+open_html = """<details open>
+  <summary>点击展开/收起图片({text})</summary>
+  <img src="{imageUrl}" alt="论文首图">
+</details>
+"""
+
+def get_images_collapse_html(text, imageUrl, open=True):
+    if open:
+        html = open_html.format(text=text, imageUrl=imageUrl)
+    else:
+        html = collapse_html.format(text=text, imageUrl=imageUrl)
     return html
 
 def datetime_to_date_str(d: datetime):
@@ -320,6 +329,7 @@ class Paper:
         md_block.append(f"- arXiv id: {self.arxiv_id}\n")
         md_block.append(f"- date_str: {self.date_str}\n")
         md_block.append(f"- arxiv link: {self.arxiv_link}\n")
+        md_block.append(f"- Kimi link: {f'https://papers.cool/arxiv/{self.arxiv_id}'}\n")
         md_block.append(f"- authors: {authors_str}\n")
         md_block.append(f"- comments: {self.comments}\n")
         if self.absolute_pdf_path:
@@ -329,9 +339,9 @@ class Paper:
             md_block.append(self.highlight)
         
         if self.img_relative_path:
-            relative_image_html = get_images_collapse_html('通用', self.img_relative_path)
-            abs_image_html = get_images_collapse_html('Obsidian', self.image_abs_path)
-            md_block.append(f"{relative_image_html}\n")
+            relative_image_html = get_images_collapse_html('通用', self.img_relative_path, open=False)
+            abs_image_html = get_images_collapse_html('Obsidian', self.image_abs_path, open=True)
+            md_block.append(f"{relative_image_html}")
             md_block.append(f"{abs_image_html}\n")
         else:
             md_block.append(f"- images: no images\n")

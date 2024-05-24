@@ -1,7 +1,7 @@
 # highlight authors, meetings, and keywords
 
 # add your keywords here
-STAR_KEYWORDS = ['Text-to-SQL']
+STAR_KEYWORDS = ['Text-to-SQL', 'Retrieval-Augmented Generation', 'Multimodal', 'RAG', 'Survey']
 
 # add your authors here
 _AUTHOR_GROUP1 = ['Zhoujun Li', 'Wanxiang Che', 'Zhiyuan Liu', 'Dawn Song', 'Kaiming He', 'Min-Yen Kan', 'Jian-Guang Lou', 'Yan Gao', 'Jiajun Zhang', 'Ji-Rong Wen']
