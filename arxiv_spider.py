@@ -23,7 +23,8 @@ client = arxiv.Client()
 
 ROOT_DIR = ''
 OVERWRITE_MARKDOWN = False
-ARXIV_LATEST_PAPER_URL = 'https://arxiv.org/list/cs.CL/pastweek?show=500'  # 替换为你要爬取的url
+ARXIV_LATEST_PAPER_URL = ''
+# https://arxiv.org/list/cs.CL/pastweek?show=500
 
 
 collapse_html = """<details>
@@ -393,22 +394,30 @@ class Paper:
             text += f"- Star Meetings: {self.get_highlight_string(find_meetings)}\n"
         self.highlight = text
         return
-            
+
+
+def print_args(args):
+    print(f"\nargs:\n")
+    for attr_name, attr_val in vars(args).items():
+        print(f"{attr_name}: {attr_val}")
+    print('\n')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument("--category", type=str, default="cs.CL", help="arxiv category, default cs.CL")
     parser.add_argument("--root_dir", type=str, required=True, help="root dir to place pdfs.")
     parser.add_argument("--days", type=int, default=3, help="get latest n days paper, deefault 3 days.")
     parser.add_argument("--overwrite", action='store_true', help='overwrite markdowns')
     args = parser.parse_args()
+    print_args(args)
 
+    ARXIV_LATEST_PAPER_URL = f"https://arxiv.org/list/{args.category}/pastweek?show=500"
     ROOT_DIR = args.root_dir
     days = args.days
     OVERWRITE_MARKDOWN = True if args.overwrite else False
 
-    cur_root_dir = join(ROOT_DIR, 'arxiv_papers2')
-    os.makedirs(cur_root_dir, exist_ok=True)
-    # cur_dir = f"{CUR_ROOT_DIR}/{date_str}"
+    os.makedirs(ROOT_DIR, exist_ok=True)
 
     day2papers = get_day_to_paper_list(latest_n=days)
 
@@ -416,7 +425,7 @@ if __name__ == '__main__':
         print()
         print(f"day: {date_str}")
         print()
-        cur_dir = join(cur_root_dir, date_str)
+        cur_dir = join(ROOT_DIR, date_str)
         cur_dir = cur_dir.replace('\\', '/')
         os.makedirs(cur_dir, exist_ok=True)
 

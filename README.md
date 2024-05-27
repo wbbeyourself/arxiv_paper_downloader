@@ -15,20 +15,20 @@ Windows system meets `pdf2image` related errors, see [issue_markdown](./issue_bu
 Download the latest n day research paper PDF, generate corresponding markdown and preview images.
 
 ```bash
-python arxiv_spider.py  --root_dir  /your/papers/dir/path  --days n
+python arxiv_spider.py --category cs.CL --root_dir  /your/papers/dir/path  --days n
 ```
 
 If you want to overwrite previous markdowns, use
 ```bash
-python arxiv_spider.py  --root_dir  /your/papers/dir/path  --days n  --overwrite
+python arxiv_spider.py --category cs.CL --root_dir  /your/papers/dir/path  --days n  --overwrite
 ```
 
 ## todo
 - [x] Highlight target conferences and authors.
 - [x] Highlight custom keyword list.
 - [x] Use VPN Arg Parse. 
+- [x] Customize the specific areas of interest, such as CS.CL and CS.CV.
 - [ ] Maintain an index database of all papers for quick search and reference.
-- [ ] Customize the specific areas of interest, such as CS.CL and CS.CV.
 - [ ] Demo videos.
 
 
