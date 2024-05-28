@@ -314,6 +314,7 @@ class Paper:
     arxiv_link: str = ""
     authors: List[str] = None
     comments: str = ""
+    categories: str = ""
     relative_pdf_path: str = ""
     absolute_pdf_path: str = ""
     img_relative_path: str = ""
@@ -333,6 +334,7 @@ class Paper:
         md_block.append(f"- Kimi link: {f'https://papers.cool/arxiv/{self.arxiv_id}'}\n")
         md_block.append(f"- authors: {authors_str}\n")
         md_block.append(f"- comments: {self.comments}\n")
+        md_block.append(f"- categories: {self.categories}\n")
         if self.absolute_pdf_path:
             md_block.append(f"- [Relative PDF FILE]({self.relative_pdf_path})\n")
             md_block.append(f"- [Absolute PDF FILE]({self.absolute_pdf_path})\n")
@@ -463,6 +465,7 @@ if __name__ == '__main__':
             pdf_url = paper.pdf_url[:-2]
             comment = paper.comment
             paper_obj.comments = comment
+            paper_obj.categories = ', '.join(paper.categories)
             pdf_dir = join(cur_dir, 'pdfs')
             os.makedirs(pdf_dir, exist_ok=True)
             index = add_leading_zeros(index)
@@ -483,8 +486,6 @@ if __name__ == '__main__':
                 paper_obj.absolute_pdf_path = pdf_aboslute_path
                 paper_obj.img_relative_path = img_relative_path
                 paper_obj.image_abs_path = image_abs_path
-                
-                
         
             paper_obj.calc_importance()
             today_papers.append(paper_obj)
