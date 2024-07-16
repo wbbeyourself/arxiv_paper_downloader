@@ -2,6 +2,7 @@
 __pycache__/
 .ipynb_checkpoints/
 arxiv_papers/
+tmp/
 .DS_Store
 test.py
 papers.json

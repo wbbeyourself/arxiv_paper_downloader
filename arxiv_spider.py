@@ -8,7 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 from pdf2image import convert_from_bytes
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfReader, PdfFileReader, PdfFileWriter
 from PIL import Image, ImageDraw, ImageFont
 import logging
 import platform
@@ -265,6 +265,48 @@ def check_markdown_file(md_path):
     return skip
 
 
+def keep_first_8_pages(pdf_filename):
+    # 打开 PDF 文件
+    
+    good = True
+    tmp_filename = pdf_filename.split('.')[0] + "_processed.pdf"
+    try:
+        with open(pdf_filename, 'rb') as file:
+            # 创建一个 PDF 读取对象
+            pdf_reader = PdfFileReader(file)
+
+            # 获取 PDF 文件的页数
+            num_pages = pdf_reader.numPages
+
+            # 如果 PDF 文件页数小于等于 8，则不需要删除任何页面
+            if num_pages <= 8:
+                # print("PDF 文件页数小于等于 8，无需处理。")
+                return
+
+            # 创建一个 PDF 写入对象
+            pdf_writer = PdfFileWriter()
+
+            # 将前 8 页添加到新的 PDF 写入对象中
+            for page_num in range(8):
+                page = pdf_reader.getPage(page_num)
+                pdf_writer.addPage(page)
+
+            # 将处理后的内容保存到一个新的文件中，文件名与原始文件相同
+            with open(tmp_filename, 'wb') as fp:
+                pdf_writer.write(fp)
+
+            # print(f"已成功保留前 8 页并保存为 {tmp_filename}")
+    except Exception as e:
+        print(f"keep_first_8_pages Error: {e}")
+        good = False
+        
+    if good:
+        # 先删除源文件，再重命名
+        os.remove(pdf_filename)
+        os.rename(tmp_filename, pdf_filename)
+        # print(f"替换成功 {pdf_filename}")
+
+
 def do_paper_download(paper: arxiv.Result, pdf_dir, pdf_filename):
     status = 0
     max_try = 3
@@ -291,9 +333,12 @@ def do_paper_download(paper: arxiv.Result, pdf_dir, pdf_filename):
                     continue
                 else:
                     print(f"Download pdf Done!\n\n")
+                    # save disk space
+                    if IS_KEEP_EIGHT:
+                        keep_first_8_pages(pdf_abs_path)
                     break
             except Exception as e:
-                print(f"Download pdf exception: \n{e}\n")
+                print("发生异常:", e)
             j += 1
             print(f"try {j} times ...")
             time.sleep(2)
@@ -302,6 +347,8 @@ def do_paper_download(paper: arxiv.Result, pdf_dir, pdf_filename):
             print(f"Download {pdf_filename} Failed!\n\n")
             return status
     else:
+        if IS_KEEP_EIGHT:
+            keep_first_8_pages(pdf_abs_path)
         print(f"Skip {pdf_filename} ...")
     return status
 
@@ -411,6 +458,7 @@ if __name__ == '__main__':
     parser.add_argument("--root_dir", type=str, required=True, help="root dir to place pdfs.")
     parser.add_argument("--days", type=int, default=3, help="get latest n days paper, deefault 3 days.")
     parser.add_argument("--overwrite", action='store_true', help='overwrite markdowns')
+    parser.add_argument("--keep_eight_pages", action='store_true', help='only keep first 8 pages of pdfs to save disk space.')
     args = parser.parse_args()
     print_args(args)
 
@@ -418,6 +466,7 @@ if __name__ == '__main__':
     ROOT_DIR = args.root_dir
     days = args.days
     OVERWRITE_MARKDOWN = True if args.overwrite else False
+    IS_KEEP_EIGHT = True if args.keep_eight_pages else False
 
     os.makedirs(ROOT_DIR, exist_ok=True)
 
