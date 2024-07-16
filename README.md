@@ -23,6 +23,12 @@ If you want to overwrite previous markdowns, use
 python arxiv_spider.py --category cs.CL --root_dir  /your/papers/dir/path  --days n  --overwrite
 ```
 
+If your disk space is not enogh and you just want to have a first preview of the main idea of the paper, you can just keep the 8 first pages of the paper.
+Just use `--keep_eight_pages` to keep the first eight pages.
+```bash
+python arxiv_spider.py --category cs.CL --root_dir  /your/papers/dir/path  --days n  --keep_eight_pages
+```
+
 ## todo
 - [x] Highlight target conferences and authors.
 - [x] Highlight custom keyword list.
